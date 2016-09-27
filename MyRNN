@@ -6,6 +6,8 @@ import lasagne
 M = 10
 N_BATCH = 6
 
+# Number of time steps
+N_TIME_STEPS = 50
 # Number of units in the hidden recurrent layer
 N_RECURRENT = 4
 # Number of units in the hidden layer
@@ -22,7 +24,7 @@ def gen_data(n_batch=N_BATCH, M=M):
     #   Input to the network of shape(n_batch, length)
     # y : np.ndarray
     #   Correct output for each sample  of shape (n_batch,)
-    X = np.random.uniform(size=(n_batch, M, 1))
+    X = np.random.uniform(size=(n_batch, N_TIME_STEPS, M))
     y = np.ones((n_batch,))
     return (X.astype(theano.config.floatX), y.astype(theano.config.floatX))
 
@@ -32,9 +34,7 @@ def squared_nonlin(x):
 
 def main(num_epochs=NUM_EPOCHS):
     print "Building network ..."
-
-    l_in = lasagne.layers.InputLayer(shape=(N_BATCH, M, 1))
-    
+    l_in = lasagne.layers.InputLayer(shape=(N_BATCH, N_TIME_STEPS, M))
     l_rnn = lasagne.layers.RecurrentLayer(
         incoming=l_in, 
         num_units=N_RECURRENT, 
@@ -42,15 +42,17 @@ def main(num_epochs=NUM_EPOCHS):
         W_hid_to_hid=lasagne.init.HeUniform(), 
         nonlinearity=lasagne.nonlinearities.rectify
     )
-
-    print (l_rnn.input_shapes, l_rnn.output_shape)
-    l_hidden = lasagne.layers.DenseLayer(
+    l_slice = lasagne.layers.SliceLayer(
         incoming=l_rnn,
+        indices=-1,
+        axis=1
+    )
+    l_hidden = lasagne.layers.DenseLayer(
+        incoming=l_slice,
         num_units=N_HIDDEN,
         W=lasagne.init.HeUniform(),
         nonlinearity=squared_nonlin
     )
-    print (l_hidden.input_shape, l_hidden.output_shape)
     # output nonlinarity -- identity ???
     # output num_units = 1 ???
     l_out = lasagne.layers.DenseLayer(
@@ -59,7 +61,14 @@ def main(num_epochs=NUM_EPOCHS):
         W=lasagne.init.HeUniform(),
         nonlinearity=lasagne.nonlinearities.identity
     )
-    print (l_out.input_shape, l_out.output_shape) 
+    
+    print (l_in.shape)
+    print (l_rnn.input_shapes, l_rnn.output_shape)
+    print (l_slice.input_shape, l_slice.output_shape)
+    print (l_hidden.input_shape, l_hidden.output_shape)
+    print (l_out.input_shape, l_out.output_shape)
+
+
     target_values = T.vector('target_output')
     
     # lasagne.layers.get_output produces a variable 
@@ -108,5 +117,34 @@ def main(num_epochs=NUM_EPOCHS):
 
 if __name__ == '__main__':
     main()
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     
