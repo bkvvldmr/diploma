@@ -1,0 +1,223 @@
+\documentclass[11pt]{beamer}
+\usetheme{Madrid}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage[OT1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{tikz, transparent, fancybox}
+\usetikzlibrary{trees}
+\usetikzlibrary{positioning,decorations.pathreplacing,shapes}
+\usepackage{smartdiagram}
+\usetikzlibrary{arrows,automata}
+\usetikzlibrary{positioning}
+\usetikzlibrary{shapes,arrows}
+\usetikzlibrary{calc, shapes, shadows, arrows, patterns}
+\tikzstyle{line} = [ draw, -latex']  
+
+%\def\norm#1{\|#1\|}
+\def\RR{\mathbb{R}}
+\def\R{\mathcal{R}}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+
+
+%\newcommand\norm[1]{\left\lVert#1\right\rVert}
+
+\institute{МГУ им. М.В.Ломоносова \\ Физический факультет \\ Кафедра математического моделирования и информатики} 
+\author{}
+\title{Нейросетевая реализация морфологического метода идентификации объектов по изображениям}
+%\setbeamercovered{transparent} 
+%\setbeamertemplate{navigation symbols}{} 
+%\logo{} 
+
+%\subject{} 
+\date{} 
+
+\begin{document}
+
+\begin{frame}
+\titlepage
+\vspace{-1cm}
+
+
+
+{\small Выполнил: Байков В.Г.}\hspace{2.8cm}{\footnotesize Научный руководитель: Чуличков А.И.}
+
+\hspace{6.37cm}{\footnotesize Соруководитель: Зубюк А.В.}
+
+\vspace{1cm}
+\hspace{5.5cm}\tiny{13 апреля 2017}
+
+\end{frame}
+
+%\begin{frame}
+%\tableofcontents
+%\end{frame}
+
+\begin{frame}{Форма изображения -- выпуклый конус}
+\newlength{\bearheight}%
+\setlength{\bearheight}{0.18\textwidth}% Высота изображения
+\begin{figure}
+{%
+\label{bear_real}%
+\includegraphics[height=\bearheight]{pictures/bear_1-2}%
+\begin{minipage}[b]{0.25\bearheight}\centerline{\Large\bf +}\vspace*{0.39\bearheight}\end{minipage}%
+\includegraphics[height=\bearheight]{pictures/bear_2-2}%
+\begin{minipage}[b]{0.3\bearheight}\centerline{\Large\bf =}\vspace*{0.41\bearheight}\end{minipage}%
+\includegraphics[height=\bearheight]{pictures/bear_sum-2}%
+}
+\end{figure}
+\vspace{0.2\bearheight}
+\begin{figure}
+{%
+\begin{minipage}[b]{0.25\bearheight}\centerline{\includegraphics[height=3\textwidth]{pictures/alpha.png}
+\hspace{0.3\bearheight}}
+\vspace*{0.2\bearheight}\end{minipage}%
+\begin{minipage}[b]{0.3\bearheight}\centerline{\Large\bf X}\vspace*{0.41\bearheight}\end{minipage}%
+\includegraphics[height=\bearheight]{pictures/bear_alpha.png}
+\begin{minipage}[b]{0.3\bearheight}\centerline{\Large\bf =}\vspace*{0.41\bearheight}\end{minipage}%
+\includegraphics[height=\bearheight]{pictures/bear_alpha_2.png}
+}
+\end{figure}
+\end{frame}
+
+
+\begin{frame}{Постановка задачи}
+Пусть даны изображения $f_1, f_2, \ldots, f_N$, а также изображение $g$. Требуется найти проекцию изображения $g$ на конус $V_F$~--- выпуклую оболочку  $f_1,\, \ldots,\, f_N$, т.\,е. $V_F = \left\{ \sum_{i=1}^N z_i f_i \;\middle|\; z_i \geqslant 0,\ i=1,\, \ldots,\, N \right\}$.
+\vspace*{2mm}
+
+Обозначим $F$ матрицу, элементы которой~--- координаты $f_1, f_2, \ldots, f_N$ в некотором ортонормированном базисе пространства изображений $\R^n$
+\vspace*{2mm}
+
+Задача проецирования $g$ на конус $V_F$ -- это задача квадратичного программирования:
+\vspace*{-2mm}
+\begin{columns}[T] % align columns
+\begin{column}{.42\textwidth}
+\color{red}\rule{\linewidth}{0pt}
+\begin{equation*}
+	\begin{cases}
+	\frac{1}{2}\norm{g - \sum_{i=1}^N z_i f_i}^2 \sim 	\min_{z_i} \\
+	z_i \geq 0, \;\; i = 1, ..., N
+	\end{cases}
+\end{equation*}
+\end{column}
+
+\begin{column}{.01\textwidth}
+\color{black}\rule{\linewidth}{0pt}
+\vspace{0.2cm}
+\begin{equation*}
+\hspace{-0.5cm}
+\Leftrightarrow
+\end{equation*}
+\end{column}
+
+\begin{column}{.42\textwidth}
+\color{blue}\rule{\linewidth}{0pt}
+\begin{equation*}
+	\begin{cases}
+	G(z) = \frac{1}{2} z^T M z + q^T z \sim \min_{z}\\
+	z \geq 0\\
+	\end{cases}
+\end{equation*}
+\end{column}%
+\end{columns}
+\vspace{-0.4cm}
+\hspace{4.8cm}
+\scalebox{0.65}{% 
+$M = F^T F$}
+
+\hspace{4.8cm}
+\scalebox{0.65}{%
+$q = - F^T g$}
+\end{frame}
+
+
+\begin{frame}{Итерационный алгоритм}
+\textcolor{red}{$$z^{r+1} =[(I - \omega M) z^r - \omega q]^+$$}
+   
+    Выбор $\omega$ ограничивается условием:
+    $$[2 (\omega I)^{-1} - M] \mbox{ ~--- положительно определенная матрица}$$
+    Или, что то же самое, $$\min\lambda(2 (\omega I)^{-1}) > \max\lambda (M) \Leftrightarrow 0 < \omega < \frac{2}{\max\lambda(M)},$$
+    где $\lambda(2 (\omega I)^{-1})$ и $\lambda(M)$~--- спектры матриц $2 (\omega I)^{-1}$ и $M$.
+\end{frame}
+
+
+\begin{frame}{Нейросетевая реализация итерационного метода}
+
+\centering
+\begin{tikzpicture}[->,>=stealth']
+    \node (Input)  [ellipse, text width=20mm, align=center, fill=blue!30] {Input \;\;g};
+    \node (n) [circle, above=of Input.north, yshift=-0.2cm, text width=3mm, align=center, fill = blue!30] {+};
+    \node (Hidden) [rectangle, above=of n.north, align=center, yshift = -0.4cm, text width = 45mm, fill = blue!30] {$z^{r+1}\;$  Recurrent layer $f(x) = max\{0, x\}$ };
+    \node (e) [right=of Hidden.south, yshift=-3.3em] {$(I - \omega F^T F)$};
+    \node (Output) [ellipse, above=of Hidden, yshift=0.2cm, align = center, text width = 20mm, fill = blue!30] {Output \;\;z};
+    
+    \node (comment) [rectangle, text width = 0.5\linewidth, left = of Output, xshift = 0.5em, yshift = -1em]{%
+    \begin{flushleft}
+    	$V_F = \left\{ \sum_{i=1}^N z_i f_i \;\middle|\; z_i \geqslant 0\right\}$\\
+    	\vspace{0.5cm}
+        $\Pi_{V_F} g = F z$\\
+        \vspace{0.5cm}
+        $\norm{g - \Pi_v g}^2 = 0 \; \Leftrightarrow \; g \in V_F$\\
+        
+    \end{flushleft}};
+   
+    \draw [->]  (Input)  edge node[anchor = east] {$\omega F^T$}  (n);
+    \draw [->] (n) edge (Hidden);
+    \draw [->]  (Hidden)  edge node[anchor = west] {} (Output);
+    \path [line,rounded corners] ($(Hidden.north) + (-0.0, 0.2)$) |- ($(Hidden.south) + (3.5, 1.4)$) |- (n); 
+   
+\end{tikzpicture}
+
+\end{frame}
+
+
+\begin{frame}{Нейросетевая реализация итерационного метода}
+\center
+\begin{tikzpicture}[->,>=stealth']
+    \node (Input)  [ellipse, text width=20mm, align=center, fill=blue!30] {Input \;\;g};
+    \node (n) [circle, above=of Input.north, yshift=-0.2cm, text width=3mm, align=center, fill = blue!30] {+};
+    \node (Hidden) [rectangle, above=of n.north, align=center, yshift = -0.4cm, text width = 45mm, fill = blue!30] {$z^{r+1}\;$  Recurrent layer $f(x) = max\{0, x\}$ };
+    \node (e) [right=of Hidden.south, yshift=-3.2em] {$(I - M)$};
+    \node (Output) [ellipse, above=of Hidden, yshift=0.2cm, align = center, text width = 20mm, fill = blue!30] {Output \;\;z};
+    
+    \node (comment1) [rectangle, text width = 0.5\linewidth, left = of Output, xshift = 0.5em, yshift = -2em]{%
+    \begin{flushleft}
+    	$\norm{M^{1/2} z - M^{-1/2}F^Tg}^2 \sim \min_{z \geq 0}$\\
+    	\vspace{0.5cm}
+        $\Pi g = F (F^T F)^{-1} M z$\\
+        \vspace{0.5cm}
+        $F^T g - M z = 0 \;\; \Leftrightarrow \;\; g \in V$
+    \end{flushleft}};
+    
+    \node (comment2) [rectangle, text width = 0.5\linewidth, left = of Input, xshift = 0.5em, yshift = 4em]{%
+    \begin{center}
+    	Ограничения на $M$:
+    \end{center}
+    \begin{flushleft}
+        $M ~- \text{неотр. определена}$\\
+        $2I - M ~- \text{неотр. определена}$\\
+        $M = M^T$
+    \end{flushleft}};
+   
+    \draw [->]  (Input)  edge node[anchor = east] {$F^T$}  (n);
+    \draw [->] (n) edge (Hidden);
+    \draw [->]  (Hidden)  edge node[anchor = west] {} (Output);
+    \path [line,rounded corners] ($(Hidden.north) + (-0.0, 0.2)$) |- ($(Hidden.south) + (3.5, 1.4)$) |- (n); 
+   
+\end{tikzpicture}
+\end{frame}
+
+
+\begin{frame}{Обучение сети}
+$$loss = \sum_{i} s_i \norm{ M^{-1/2} (x - M z) }^2 \sim \min_{M}$$
+\end{frame}
+
+
+\begin{frame} {Промежуточные результаты}
+$$loss = \sum_{i} s_i \norm{ M^{-1/2} (x - M z) }^2 \sim \min_{M}$$
+\includegraphics[height=165px, width=300px]{pictures/net_results_graph}
+\end{frame}
+\end{document}
