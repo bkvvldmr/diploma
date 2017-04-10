@@ -1,5 +1,5 @@
 \documentclass[11pt]{beamer}
-\usetheme{Madrid}
+\usetheme{metropolis}
 \usepackage[utf8]{inputenc}
 \usepackage[russian]{babel}
 \usepackage[OT1]{fontenc}
@@ -21,13 +21,13 @@
 \def\RR{\mathbb{R}}
 \def\R{\mathcal{R}}
 \newcommand{\norm}[1]{\left\lVert#1\right\rVert}
-
+\newcommand\tab[1][1cm]{\hspace*{#1}}
 
 %\newcommand\norm[1]{\left\lVert#1\right\rVert}
 
-\institute{МГУ им. М.В.Ломоносова \\ Физический факультет \\ Кафедра математического моделирования и информатики} 
-\author{}
-\title{Нейросетевая реализация морфологического метода идентификации объектов по изображениям}
+\institute{\vspace{-2cm} \tab[7cm] \textbf{Выполнил:} \\ \tab[7cm] Байков Владимир}
+\author{\vspace{0cm} \textbf{Научный руководитель:} \\ д.\,ф.-м.\,н. проф. Чуличков А.\;И\\ \textbf{Соруководитель:}\\ м.\,н.\,с.\,Зубюк А.\;В.}
+\title{\vspace{2cm}Нейросетевая реализация морфологического метода идентификации объектов по изображениям}
 %\setbeamercovered{transparent} 
 %\setbeamertemplate{navigation symbols}{} 
 %\logo{} 
@@ -35,20 +35,15 @@
 %\subject{} 
 \date{} 
 
+\addtocounter{framenumber}{-1}
+\setbeamertemplate{footline}{} 
+
+
 \begin{document}
+
 
 \begin{frame}
 \titlepage
-\vspace{-1cm}
-
-
-
-{\small Выполнил: Байков В.Г.}\hspace{2.8cm}{\footnotesize Научный руководитель: Чуличков А.И.}
-
-\hspace{6.37cm}{\footnotesize Соруководитель: Зубюк А.В.}
-
-\vspace{1cm}
-\hspace{5.5cm}\tiny{13 апреля 2017}
 
 \end{frame}
 
@@ -70,77 +65,96 @@
 }
 \end{figure}
 \vspace{0.2\bearheight}
+
 \begin{figure}
 {%
-\begin{minipage}[b]{0.25\bearheight}\centerline{\includegraphics[height=3\textwidth]{pictures/alpha.png}
-\hspace{0.3\bearheight}}
-\vspace*{0.2\bearheight}\end{minipage}%
-\begin{minipage}[b]{0.3\bearheight}\centerline{\Large\bf X}\vspace*{0.41\bearheight}\end{minipage}%
+\hspace{-1cm}
+\begin{minipage}[b]{0.25\bearheight}
+%\centerline{\includegraphics[height=2\textwidth]{pictures/alpha.png}}
+\hspace*{0.05\bearheight}
+\scalebox{2}{$\alpha$}
+\vspace*{0.14\bearheight}
+\end{minipage}
+\begin{minipage}[b]{0.3\bearheight}\centerline{\Large\bf $\times$}\vspace*{0.41\bearheight}\end{minipage}%
 \includegraphics[height=\bearheight]{pictures/bear_alpha.png}
 \begin{minipage}[b]{0.3\bearheight}\centerline{\Large\bf =}\vspace*{0.41\bearheight}\end{minipage}%
 \includegraphics[height=\bearheight]{pictures/bear_alpha_2.png}
+\begin{minipage}[b]{0.25\bearheight}
+%\centerline{\includegraphics[height=2\textwidth]{pictures/alpha.png}}
+\hspace*{0.05\bearheight}
+\scalebox{2}{$\;,\;\alpha \geq 0$}
+\vspace*{0.14\bearheight}
+\end{minipage}
 }
 \end{figure}
 \end{frame}
 
 
-\begin{frame}{Постановка задачи}
-Пусть даны изображения $f_1, f_2, \ldots, f_N$, а также изображение $g$. Требуется найти проекцию изображения $g$ на конус $V_F$~--- выпуклую оболочку  $f_1,\, \ldots,\, f_N$, т.\,е. $V_F = \left\{ \sum_{i=1}^N z_i f_i \;\middle|\; z_i \geqslant 0,\ i=1,\, \ldots,\, N \right\}$.
+\begin{frame}{Проецирование на многогранный конус}
+Пусть даны изображения $f_1, \ldots, f_N$, а также изображение $g$. Требуется найти проекцию изображения $g$ на конус $V_F$~--- выпуклую оболочку  $f_1,\, \ldots,\, f_N$, т.\,е. \small $V_F = \left\{ \sum\limits_{i=1}^N z_i f_i \;\middle|\; z_i \geqslant 0,\ i=1,\, \ldots,\, N \right\}$.
 \vspace*{2mm}
+\normalsize
 
-Обозначим $F$ матрицу, элементы которой~--- координаты $f_1, f_2, \ldots, f_N$ в некотором ортонормированном базисе пространства изображений $\R^n$
-\vspace*{2mm}
+Обозначим $F$ матрицу, столбцы которой суть $f_1, \ldots, f_N$.
+\vspace*{0.2mm}
 
 Задача проецирования $g$ на конус $V_F$ -- это задача квадратичного программирования:
 \vspace*{-2mm}
-\begin{columns}[T] % align columns
-\begin{column}{.42\textwidth}
-\color{red}\rule{\linewidth}{0pt}
-\begin{equation*}
-	\begin{cases}
-	\frac{1}{2}\norm{g - \sum_{i=1}^N z_i f_i}^2 \sim 	\min_{z_i} \\
-	z_i \geq 0, \;\; i = 1, ..., N
-	\end{cases}
-\end{equation*}
-\end{column}
 
-\begin{column}{.01\textwidth}
-\color{black}\rule{\linewidth}{0pt}
-\vspace{0.2cm}
-\begin{equation*}
-\hspace{-0.5cm}
-\Leftrightarrow
-\end{equation*}
-\end{column}
+$$\norm{g - \sum\limits_{i=1}^N z_i f_i}^2 = \norm{g - F z}^2 \sim \min\limits_{z \geq 0}$$
 
-\begin{column}{.42\textwidth}
-\color{blue}\rule{\linewidth}{0pt}
-\begin{equation*}
-	\begin{cases}
-	G(z) = \frac{1}{2} z^T M z + q^T z \sim \min_{z}\\
-	z \geq 0\\
-	\end{cases}
-\end{equation*}
-\end{column}%
-\end{columns}
-\vspace{-0.4cm}
-\hspace{4.8cm}
-\scalebox{0.65}{% 
-$M = F^T F$}
+%$$\norm{(F^T F)^{1/2} z - (F^T F)^{-1/2} F^T g}^2 \sim \min\limits_{z \geq 0}$$
+%$$\frac{1}{2} z^T F^T F z - F^T g z \sim \min\limits_{z \geq 0}$$
+$$\frac{1}{2} (F^T F z, z) - (F^T g, z) \sim \min\limits_{z \geq 0}$$
 
-\hspace{4.8cm}
-\scalebox{0.65}{%
-$q = - F^T g$}
+%\begin{columns}[T] % align columns
+%\begin{column}{.42\textwidth}
+%\color{red}\rule{\linewidth}{0pt}
+%\begin{equation*}
+%	\begin{cases}
+%	\frac{1}{2}\norm{g - \sum\limits_{i=1}^N z_i f_i}^2 \sim 	\min\limits_{z_i} \\
+%	z_i \geq 0, \;\; i = 1, ..., N
+%	\end{cases}
+%\end{equation*}
+%\end{column}
+%
+%\begin{column}{.01\textwidth}
+%\color{black}\rule{\linewidth}{0pt}
+%\vspace{0.2cm}
+%\begin{equation*}
+%\hspace{-0.5cm}
+%\Leftrightarrow
+%\end{equation*}
+%\end{column}
+%
+%\begin{column}{.42\textwidth}
+%\color{blue}\rule{\linewidth}{0pt}
+%\begin{equation*}
+%	\begin{cases}
+%	G(z) = \frac{1}{2} z^T M z + q^T z \sim \min\limits_{z}\\
+%	z \geq 0\\
+%	\end{cases}
+%\end{equation*}
+%\end{column}%
+%\end{columns}
+%\vspace{-1cm}
+%\hspace{4.5cm}
+%\scalebox{0.65}{% 
+%$M = F^T F$}
+%
+%\vspace{-4mm}
+%\hspace{4.5cm}
+%\scalebox{0.65}{%
+%$q = - F^T g$}
 \end{frame}
 
 
-\begin{frame}{Итерационный алгоритм}
-\textcolor{red}{$$z^{r+1} =[(I - \omega M) z^r - \omega q]^+$$}
+\begin{frame}{Метод проекции градиента}
+\textcolor{red}{$$z^{r+1} = \max\{0, \;\;[(I - \omega F^T F) z^r + \omega F^T g]\}$$}
    
     Выбор $\omega$ ограничивается условием:
-    $$[2 (\omega I)^{-1} - M] \mbox{ ~--- положительно определенная матрица}$$
-    Или, что то же самое, $$\min\lambda(2 (\omega I)^{-1}) > \max\lambda (M) \Leftrightarrow 0 < \omega < \frac{2}{\max\lambda(M)},$$
-    где $\lambda(2 (\omega I)^{-1})$ и $\lambda(M)$~--- спектры матриц $2 (\omega I)^{-1}$ и $M$.
+    $$0 < \omega < \frac{2}{\max\lambda(F^T F)},$$
+    где $\lambda(F^T F)$~--- спектр матрицы $(F^T F)$.
 \end{frame}
 
 
@@ -148,26 +162,29 @@ $q = - F^T g$}
 
 \centering
 \begin{tikzpicture}[->,>=stealth']
-    \node (Input)  [ellipse, text width=20mm, align=center, fill=blue!30] {Input \;\;g};
+    \node (Input)  [ellipse, text width=20mm, align=center, fill=blue!30] {Вход \;\;$g$};
     \node (n) [circle, above=of Input.north, yshift=-0.2cm, text width=3mm, align=center, fill = blue!30] {+};
-    \node (Hidden) [rectangle, above=of n.north, align=center, yshift = -0.4cm, text width = 45mm, fill = blue!30] {$z^{r+1}\;$  Recurrent layer $f(x) = max\{0, x\}$ };
+    \node (Hidden) [rectangle, above=of n.north, align=center, yshift = -0.6cm, text width = 45mm, fill = blue!30] {Рекуррентный слой \;$z^{r+1}\;$ $f(x) = \max\{0, x\} - \text{ReLU}$ };
     \node (e) [right=of Hidden.south, yshift=-3.3em] {$(I - \omega F^T F)$};
-    \node (Output) [ellipse, above=of Hidden, yshift=0.2cm, align = center, text width = 20mm, fill = blue!30] {Output \;\;z};
+    \node (Output) [ellipse, above=of Hidden, yshift=0.2cm, align = center, text width = 22mm, fill = blue!30] {Выход \;$z_*(g)$};
     
-    \node (comment) [rectangle, text width = 0.5\linewidth, left = of Output, xshift = 0.5em, yshift = -1em]{%
+    \node (comment) [rectangle, text width = 0.4\linewidth, left = of Output, xshift = -2.2em, yshift = -2cm]{%
     \begin{flushleft}
-    	$V_F = \left\{ \sum_{i=1}^N z_i f_i \;\middle|\; z_i \geqslant 0\right\}$\\
-    	\vspace{0.5cm}
-        $\Pi_{V_F} g = F z$\\
-        \vspace{0.5cm}
-        $\norm{g - \Pi_v g}^2 = 0 \; \Leftrightarrow \; g \in V_F$\\
-        
+%    	$V_F = \left\{ \sum\limits_{i=1}^N z_i f_i \;\middle|\; z_i \geqslant 0\right\}$\\
+%    	\vspace{0.5cm}
+%        $\Pi_{V_F} g = F z$\\
+%        \vspace{0.5cm}
+%        $\norm{g - \Pi_v g}^2 = 0 \; \Leftrightarrow \; g \in V_F$\\
+      \hspace{-0.8cm}\scriptsize $ \norm{(F^T F)^{1/2} z - (F^T F)^{-1/2} F^T g}^2 \sim \min\limits_{z \geq 0}$\\
+      \vspace{0.5cm}\hspace{-0.8cm}$\Pi_F g = F z_*$ ~--- проектор на $V_F$\\
+      \vspace{0.5cm}\hspace{-0.8cm}$\Pi_F g = arg \min\limits_{f \in V_F} \norm{g - f}^2$\\
+      \vspace{0.5cm}\hspace{-0.8cm}$\norm{g - \Pi_F g}^2 = 0 \; \Leftrightarrow \; g \in V_F$\\
     \end{flushleft}};
    
     \draw [->]  (Input)  edge node[anchor = east] {$\omega F^T$}  (n);
     \draw [->] (n) edge (Hidden);
     \draw [->]  (Hidden)  edge node[anchor = west] {} (Output);
-    \path [line,rounded corners] ($(Hidden.north) + (-0.0, 0.2)$) |- ($(Hidden.south) + (3.5, 1.4)$) |- (n); 
+    \path [line,rounded corners] ($(Hidden.north) + (-0.0, 0.2)$) |- ($(Hidden.south) + (3.0, 1.8)$) |- (n); 
    
 \end{tikzpicture}
 
@@ -177,47 +194,116 @@ $q = - F^T g$}
 \begin{frame}{Нейросетевая реализация итерационного метода}
 \center
 \begin{tikzpicture}[->,>=stealth']
-    \node (Input)  [ellipse, text width=20mm, align=center, fill=blue!30] {Input \;\;g};
+    \node (Input)  [ellipse, text width=20mm, align=center, fill=blue!30] {Вход \;\;$g$};
     \node (n) [circle, above=of Input.north, yshift=-0.2cm, text width=3mm, align=center, fill = blue!30] {+};
-    \node (Hidden) [rectangle, above=of n.north, align=center, yshift = -0.4cm, text width = 45mm, fill = blue!30] {$z^{r+1}\;$  Recurrent layer $f(x) = max\{0, x\}$ };
+    \node (Hidden) [rectangle, above=of n.north, align=center, yshift = -0.4cm, text width = 45mm, fill = blue!30] {Рекуррентный слой $z^{r+1}\;$  $f(x) = \max\{0, x\} - \text{ReLU}$ };
     \node (e) [right=of Hidden.south, yshift=-3.2em] {$(I - M)$};
-    \node (Output) [ellipse, above=of Hidden, yshift=0.2cm, align = center, text width = 20mm, fill = blue!30] {Output \;\;z};
+    \node (Output) [ellipse, above=of Hidden, yshift=0.2cm, align = center, text width = 23mm, fill = blue!30] {Выход \;\;$z_*(g)$};
     
-    \node (comment1) [rectangle, text width = 0.5\linewidth, left = of Output, xshift = 0.5em, yshift = -2em]{%
-    \begin{flushleft}
-    	$\norm{M^{1/2} z - M^{-1/2}F^Tg}^2 \sim \min_{z \geq 0}$\\
-    	\vspace{0.5cm}
-        $\Pi g = F (F^T F)^{-1} M z$\\
-        \vspace{0.5cm}
-        $F^T g - M z = 0 \;\; \Leftrightarrow \;\; g \in V$
-    \end{flushleft}};
     
-    \node (comment2) [rectangle, text width = 0.5\linewidth, left = of Input, xshift = 0.5em, yshift = 4em]{%
-    \begin{center}
-    	Ограничения на $M$:
-    \end{center}
+    \node (comment1) [rectangle, text width = 0.5\linewidth, left = of Hidden, xshift = +2.5em, yshift = -2em]{%
     \begin{flushleft}
-        $M ~- \text{неотр. определена}$\\
-        $2I - M ~- \text{неотр. определена}$\\
-        $M = M^T$
-    \end{flushleft}};
+    \scriptsize
+    \vspace{-1cm}\hspace{-0.8cm}$\norm{M^{1/2} z - M^{-1/2}F^Tg}^2 \sim \min\limits_{z \geq 0}$\\
+    \vspace{0.3cm}\hspace{-0.8cm}$\Pi_{F, M} g = F (F^T F)^{-1} M z_*,\;\;\; \Pi_{F, M}^2 g = \Pi_{F, M} g$\\
+	\vspace{0.3cm}\hspace{-0.8cm}$V_{F, M} = \{F (F^T F)^{-1} M z,\;\;z \geq 0\}$\\    
+%	\vspace{0.3cm}\hspace{-0.8cm}$\Pi_{F, M} g = arg \min\limits_{f \in V_{F, M}} \norm{M^{-1/2} F^T (g - f)}^2$\\
+%	\vspace{0.3cm}\hspace{-0.8cm}$\norm{M^{-1/2} F^T (g - \Pi_{F, M} g)}^2 = 0 \Leftrightarrow g \in V_{F, M} \; \Leftrightarrow$\\
+%	\vspace{0.3cm}\hspace{-0.8cm}$\Leftrightarrow \; \norm{M^{1/2} z_* - M^{-1/2}F^T g}^2 = 0$\\	
+	\vspace{0.7cm}\hspace{-0.8cm} Ограничения на $M:$\\
+	$M, (2 I - M) - $ неотр. определены \\
+	$M = M^T$
+	\end{flushleft}};
+	
+%    	$\norm{M^{1/2} z - M^{-1/2}F^Tg}^2 \sim \min\limits_{z \geq 0}$\\
+%    	\vspace{0.2cm}
+%        $\Pi g = F (F^T F)^{-1} M z$\\
+%        \vspace{0.4cm}
+%        $F^T g - M z = 0 \;\; \Leftrightarrow \;\; g \in V$
+%    \end{flushleft}};
+%    
+%    \node (comment2) [rectangle, text width = 0.5\linewidth, left = of Input, xshift = 0.5em, yshift = 3em]{%
+%    \begin{center}
+%    	Ограничения на $M$:
+%    \end{center}
+%    \begin{flushleft}
+%        $M ~- \text{неотр. определена}$\\
+%        \vspace{0.2cm}
+%        $(2I - M) ~- \text{неотр. определена}$\\
+%		\vspace{0.2cm}        
+%        $M = M^T$
+    
    
     \draw [->]  (Input)  edge node[anchor = east] {$F^T$}  (n);
     \draw [->] (n) edge (Hidden);
     \draw [->]  (Hidden)  edge node[anchor = west] {} (Output);
-    \path [line,rounded corners] ($(Hidden.north) + (-0.0, 0.2)$) |- ($(Hidden.south) + (3.5, 1.4)$) |- (n); 
+    \path [line,rounded corners] ($(Hidden.north) + (-0.0, 0.2)$) |- ($(Hidden.south) + (3.0, 1.8)$) |- (n); 
    
 \end{tikzpicture}
+
+\vspace{0.3cm}\footnotesize\textcolor{red}{
+$\norm{M^{1/2} z_*(g) - M^{-1/2} F^T g}^2 + \norm{g}^2 - \norm{(F^T F)^{-1/2} F^T g}^2 = 0\; \Leftrightarrow \;g \in V_{F, M}$}
 \end{frame}
 
 
 \begin{frame}{Обучение сети}
-$$loss = \sum_{i} s_i \norm{ M^{-1/2} (x - M z) }^2 \sim \min_{M}$$
+\hspace{-0.6cm}{\small$
+loss = \sum\limits_{i=1}^L s_i\; [\;\norm{ M^{-1/2} (F^T g^{(i)} - M z_*^{(i)}) }^2 + \norm{g}^2 - \norm{(F^T F)^{-1/2} F^T g}^2] \sim \min\limits_{F, M}$}%
+
+\hspace{1.5cm}$
+	s_i = 
+	\begin{cases}
+		\;\;\;1, \;\; g^{(i)} \in V_{F, M}\\
+		-1, \;\; g^{(i)} \notin V_{F, M}
+	\end{cases},\tab i = 1, ..., L
+$
+
+\hspace{1.5cm}$L - \text{объем обучающей выборки}$
+\vspace{6mm}
+\noindent\textcolor{orange}{\rule{11cm}{0.2mm}}
+
+%$\delta M = \frac{1}{2} (\delta M + \delta M^T)$
+%
+%\vspace{0.2cm}
+%$S, V = eig(M + \delta M)$
+%
+%\vspace{0.2cm}
+%$S_i = max(-0.95, \;min(S_i,\; 0.95))$
+%
+%$M = V^T S \;V$
+
+\small
+\vspace{-0.4cm}
+\begin{columns}[T] % align columns
+\hspace{2mm}
+\begin{column}{.55\textwidth}
+\vspace{0.75cm}
+\color{black}\rule{\linewidth}{0pt}
+$M, \;\;(2I - M)$ ~--- неотр. определена\\
+$M = M^T$
+\end{column}
+\begin{column}{.5\textwidth}
+\vspace{0.2cm}
+\color{red}\rule{\linewidth}{0pt}
+\vspace{0.2cm}
+$\delta M = \frac{1}{2} (\delta M + \delta M^T)$
+\vspace{0.2cm}
+$S, V = eig(M + \delta M)$
+\vspace{0.2cm}
+$S_i = max(-0.95, \;min(S_i,\; 0.95))$
+$M = V^T S \;V$
+\end{column}%
+\end{columns}
+\end{frame}
+
+
+\begin{frame}{Результаты}
+
 \end{frame}
 
 
 \begin{frame} {Промежуточные результаты}
-$$loss = \sum_{i} s_i \norm{ M^{-1/2} (x - M z) }^2 \sim \min_{M}$$
+$$loss = \sum_{i} s_i \norm{ M^{-1/2} (F^T g^{(i)} - M z^{(i)}) }^2 \sim \min_{M}$$
 \includegraphics[height=165px, width=300px]{pictures/net_results_graph}
 \end{frame}
 \end{document}
